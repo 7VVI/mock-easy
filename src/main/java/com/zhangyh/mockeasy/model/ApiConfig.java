@@ -1,21 +1,40 @@
 package com.zhangyh.mockeasy.model;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+
+import java.util.Date;
+
 import java.util.List;
 import java.util.Map;
 
 /**
  * API配置模型，用于存储动态API的配置信息
  */
+@TableName(value = "api_config", autoResultMap = true)
 public class ApiConfig {
+    @TableId(type = IdType.ASSIGN_UUID)
     private String id;
     private String path;           // API路径
     private String method;         // 请求方法 (GET, POST, PUT, DELETE等)
     private String description;    // API描述
+    @TableField(typeHandler = JacksonTypeHandler.class)
     private List<FieldConfig> responseFields; // 响应字段配置
     private Integer responseCount; // 响应数据条数
+    @TableField(typeHandler = JacksonTypeHandler.class)
     private Map<String, String> headers; // 响应头
     private Integer delay;         // 模拟延迟(毫秒)
     private Integer statusCode;    // 响应状态码
+    
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;      // 创建时间
+    
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;      // 更新时间
 
     public ApiConfig() {
     }
@@ -90,5 +109,21 @@ public class ApiConfig {
 
     public void setStatusCode(Integer statusCode) {
         this.statusCode = statusCode;
+    }
+    
+    public Date getCreateTime() {
+        return createTime;
+    }
+    
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+    
+    public Date getUpdateTime() {
+        return updateTime;
+    }
+    
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
     }
 }

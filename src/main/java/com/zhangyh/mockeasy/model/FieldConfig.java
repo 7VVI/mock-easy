@@ -1,9 +1,12 @@
 package com.zhangyh.mockeasy.model;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+
 /**
  * 字段配置模型，用于定义API响应字段的类型、规则等信息
  */
-public class FieldConfig {
+public class FieldConfig implements Serializable {
     private String name;           // 字段名称
     private String type;           // 字段类型 (String, Integer, Boolean, Array, Object等)
     private String rule;           // 数据生成规则 (例如：随机、递增、固定值等)
