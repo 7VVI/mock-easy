@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>创建API</title>
+    <style>
+        .field-row {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .nested-fields {
+            margin-left: 20px;
+            padding-left: 10px;
+            border-left: 3px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h2>创建新API</h2>
+        <form id="apiForm" class="mt-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">基本信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="path" class="form-label">API路径 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="path" name="path" required
+                                   placeholder="例如: /api/users">
+                            <div class="form-text">API路径必须以/开头</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="method" class="form-label">请求方法 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="method" name="method" required>
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="PATCH">PATCH</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="description" class="form-label">API描述</label>
+                            <input type="text" class="form-control" id="description" name="description"
+                                   placeholder="API的用途描述">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="statusCode" class="form-label">状态码</label>
+                            <input type="number" class="form-control" id="statusCode" name="statusCode"
+                                   value="200" min="100" max="599">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="responseCount" class="form-label">响应数据条数</label>
+                            <input type="number" class="form-control" id="responseCount" name="responseCount"
+                                   value="1" min="1" max="100">
+                            <div class="form-text">大于1时返回数组，等于1时返回对象</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="delay" class="form-label">响应延迟(毫秒)</label>
+                            <input type="number" class="form-control" id="delay" name="delay"
+                                   value="0" min="0" max="10000">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">响应字段配置</h5>
+                    <button type="button" class="btn btn-light btn-sm" id="addField">
+                        <i class="fas fa-plus"></i> 添加字段
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="fieldsContainer">
+                        <!-- 字段将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">响应头配置</h5>
+                    <button type="button" class="btn btn-light btn-sm" id="addHeader">
+                        <i class="fas fa-plus"></i> 添加响应头
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="headersContainer">
+                        <!-- 响应头将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a th:href="@{/}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> 保存API
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div layout:fragment="scripts">
+        <script>
+            $(document).ready(function() {
+                // 添加字段
+                $('#addField').click(function() {
+                    addField();
+                });
+
+                // 添加响应头
+                $('#addHeader').click(function() {
+                    addHeader();
+                });
+
+                // 表单提交
+                $('#apiForm').submit(function(e) {
+                    e.preventDefault();
+                    saveApiConfig();
+                });
+
+                // 初始添加一个字段
+                addField();
+            });
+
+            // 添加字段函数
+            function addField(parentId = null) {
+                const fieldId = 'field_' + Date.now();
+                const fieldHtml = `
+                    <div class="field-row" id="${fieldId}" ${parentId ? 'data-parent="' + parentId + '"' : ''}>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">字段配置</h6>
+                            <button type="button" class="btn btn-danger btn-sm remove-field">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">字段名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control field-name" required>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">字段类型 <span class="text-danger">*</span></label>
+                                <select class="form-select field-type">
+                                    <option value="string">String</option>
+                                    <option value="integer">Integer</option>
+                                    <option value="double">Double</option>
+                                    <option value="boolean">Boolean</option>
+                                    <option value="date">Date</option>
+                                    <option value="datetime">DateTime</option>
+                                    <option value="time">Time</option>
+                                    <option value="array">Array</option>
+                                    <option value="object">Object</option>
+                                    <option value="ip">IP地址</option>
+                                    <option value="url">URL</option>
+                                    <option value="id_card">身份证号</option>
+                                    <option value="color">颜色</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">数据生成规则</label>
+                                <select class="form-select field-rule">
+                                    <option value="random">随机</option>
+                                    <option value="uuid">UUID</option>
+                                    <option value="name">姓名</option>
+                                    <option value="email">邮箱</option>
+                                    <option value="phone">电话</option>
+                                    <option value="address">地址</option>
+                                    <option value="increment">递增</option>
+                                    <option value="fixed">固定值</option>
+                                    <option value="ip">IP地址</option>
+                                    <option value="url">URL</option>
+                                    <option value="id_card">身份证号</option>
+                                    <option value="color">颜色</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">固定值/参数</label>
+                                <input type="text" class="form-control field-value">
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label">最小长度/值</label>
+                                <input type="number" class="form-control field-min" value="0">
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label">最大长度/值</label>
+                                <input type="number" class="form-control field-max" value="100">
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">字段描述</label>
+                                <input type="text" class="form-control field-description">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input field-required" type="checkbox" checked>
+                                    <label class="form-check-label">必需字段</label>
+                                </div>
+                            </div>
+                            <div class="col-md-8 mb-2 nested-field-controls" style="display: none;">
+                                <button type="button" class="btn btn-primary btn-sm add-nested-field">
+                                    <i class="fas fa-plus"></i> 添加子字段
+                                </button>
+                            </div>
+                        </div>
+                        <div class="nested-fields" style="display: none;"></div>
+                    </div>
+                `;
+
+                if (parentId) {
+                    // 添加到父字段的嵌套容器中
+                    $(`#${parentId} .nested-fields`).append(fieldHtml).show();
+                } else {
+                    // 添加到主容器
+                    $('#fieldsContainer').append(fieldHtml);
+                }
+
+                // 绑定事件
+                bindFieldEvents(fieldId);
+            }
+
+            // 绑定字段事件
+            function bindFieldEvents(fieldId) {
+                const $field = $(`#${fieldId}`);
+
+                // 删除字段
+                $field.find('.remove-field').click(function() {
+                    $field.remove();
+                });
+
+                // 字段类型变化
+                $field.find('.field-type').change(function() {
+                    const type = $(this).val();
+                    const $nestedControls = $field.find('.nested-field-controls');
+                    const $nestedFields = $field.find('.nested-fields');
+
+                    if (type === 'object' || type === 'array') {
+                        $nestedControls.show();
+                        if ($nestedFields.children().length > 0) {
+                            $nestedFields.show();
+                        }
+                    } else {
+                        $nestedControls.hide();
+                        $nestedFields.hide();
+                    }
+                });
+
+                // 添加嵌套字段
+                $field.find('.add-nested-field').click(function() {
+                    addField(fieldId);
+                    $field.find('.nested-fields').show();
+                });
+            }
+
+            // 添加响应头
+            function addHeader() {
+                const headerId = 'header_' + Date.now();
+                const headerHtml = `
+                    <div class="row mb-2" id="${headerId}">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control header-name" placeholder="响应头名称">
+                        </div>
+                        <div class="col-md-5">
+                            <input type="text" class="form-control header-value" placeholder="响应头值">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger remove-header">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                $('#headersContainer').append(headerHtml);
+
+                // 绑定删除事件
+                $(`#${headerId} .remove-header`).click(function() {
+                    $(`#${headerId}`).remove();
+                });
+            }
+
+            // 收集字段数据
+            function collectFieldData($field, isNested = false) {
+                const fieldData = {
+                    name: $field.find('.field-name').val(),
+                    type: $field.find('.field-type').val(),
+                    rule: $field.find('.field-rule').val(),
+                    value: $field.find('.field-value').val(),
+                    minLength: parseInt($field.find('.field-min').val()),
+                    maxLength: parseInt($field.find('.field-max').val()),
+                    required: $field.find('.field-required').is(':checked'),
+                    description: $field.find('.field-description').val(),
+                    isNested: isNested
+                };
+
+                // 收集子字段
+                if ((fieldData.type === 'object' || fieldData.type === 'array') && 
+                    $field.find('.nested-fields').children().length > 0) {
+                    fieldData.children = [];
+                    $field.find('.nested-fields > .field-row').each(function() {
+                        fieldData.children.push(collectFieldData($(this), true));
+                    });
+                }
+
+                return fieldData;
+            }
+
+            // 收集响应头数据
+            function collectHeadersData() {
+                const headers = {};
+                $('#headersContainer .row').each(function() {
+                    const name = $(this).find('.header-name').val();
+                    const value = $(this).find('.header-value').val();
+                    if (name && value) {
+                        headers[name] = value;
+                    }
+                });
+                return headers;
+            }
+
+            // 保存API配置
+            function saveApiConfig() {
+                // 收集表单数据
+                const apiConfig = {
+                    path: $('#path').val(),
+                    method: $('#method').val(),
+                    description: $('#description').val(),
+                    statusCode: parseInt($('#statusCode').val()),
+                    responseCount: parseInt($('#responseCount').val()),
+                    delay: parseInt($('#delay').val()),
+                    responseFields: [],
+                    headers: collectHeadersData()
+                };
+
+                // 收集字段数据
+                $('#fieldsContainer > .field-row').each(function() {
+                    apiConfig.responseFields.push(collectFieldData($(this)));
+                });
+
+                // 发送请求
+                $.ajax({
+                    url: '/api/config',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(apiConfig),
+                    success: function(response) {
+                        alert('API创建成功！');
+                        window.location.href = '/';
+                    },
+                    error: function(xhr) {
+                        alert('创建失败: ' + (xhr.responseText || '未知错误'));
+                    }
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>
