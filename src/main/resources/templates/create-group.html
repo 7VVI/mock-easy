@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建API分组 - MockEasy</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>创建API分组</h2>
+            <a href="/groups" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 返回分组列表
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form id="groupForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">分组名称</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">分组描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" onclick="saveGroup()">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function saveGroup() {
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+            
+            if (!name) {
+                alert('请输入分组名称');
+                return;
+            }
+            
+            const groupData = {
+                name: name,
+                description: description
+            };
+            
+            fetch('/api/group', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(groupData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text || '保存失败');
+                    });
+                }
+                return response.json();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('保存失败: ' + error.message);
+                return Promise.reject(error);
+            })
+            .then(data => {
+                window.location.href = '/groups';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('保存失败: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

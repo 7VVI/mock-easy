@@ -23,8 +23,20 @@ public class DatabaseInitializer implements CommandLineRunner {
         // 读取schema.sql文件
         ClassPathResource resource = new ClassPathResource("db/schema.sql");
         String sql = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+
+        // 将SQL脚本拆分为单独的语句
+        String[] sqlStatements = sql.split(";");
         
-        // 执行SQL脚本
-        jdbcTemplate.execute(sql);
+        // 逐条执行SQL语句
+        for (String statement : sqlStatements) {
+            if (!statement.trim().isEmpty()) {
+                try {
+                    jdbcTemplate.execute(statement);
+                } catch (Exception e) {
+                    System.err.println("执行SQL语句失败: " + statement);
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }

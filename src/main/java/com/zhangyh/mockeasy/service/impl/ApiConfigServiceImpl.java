@@ -1,5 +1,6 @@
 package com.zhangyh.mockeasy.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.zhangyh.mockeasy.handler.DynamicApiHandler;
 import com.zhangyh.mockeasy.mapper.ApiConfigMapper;
 import com.zhangyh.mockeasy.model.ApiConfig;
@@ -49,6 +50,13 @@ public class ApiConfigServiceImpl implements ApiConfigService {
     @Override
     public List<ApiConfig> getAllApiConfigs() {
         return apiConfigMapper.selectList(null);
+    }
+    
+    @Override
+    public List<ApiConfig> getApiConfigsByGroupId(String groupId) {
+        LambdaQueryWrapper<ApiConfig> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ApiConfig::getGroupId, groupId);
+        return apiConfigMapper.selectList(queryWrapper);
     }
 
     @Override

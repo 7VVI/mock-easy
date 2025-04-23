@@ -22,6 +22,7 @@ public class ApiConfig {
     private String path;           // API路径
     private String method;         // 请求方法 (GET, POST, PUT, DELETE等)
     private String description;    // API描述
+    private String groupId;        // 所属分组ID
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<FieldConfig> responseFields; // 响应字段配置
     private Integer responseCount; // 响应数据条数
@@ -69,6 +70,14 @@ public class ApiConfig {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
     }
 
     public List<FieldConfig> getResponseFields() {

@@ -47,10 +47,20 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="description" class="form-label">API描述</label>
                             <input type="text" class="form-control" id="description" name="description"
                                    th:value="${apiConfig.description}" placeholder="API的用途描述">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="groupId" class="form-label">所属分组</label>
+                            <select class="form-select" id="groupId" name="groupId">
+                                <option value="">未分组</option>
+                                <option th:each="group : ${apiGroups}" 
+                                        th:value="${group.id}" 
+                                        th:text="${group.name}"
+                                        th:selected="${group.id == apiConfig.groupId}"></option>
+                            </select>
                         </div>
                     </div>
                     <div class="row">
@@ -399,6 +409,7 @@
                     path: $('#path').val(),
                     method: $('#method').val(),
                     description: $('#description').val(),
+                    groupId: $('#groupId').val(),
                     statusCode: parseInt($('#statusCode').val()),
                     responseCount: parseInt($('#responseCount').val()),
                     delay: parseInt($('#delay').val()),

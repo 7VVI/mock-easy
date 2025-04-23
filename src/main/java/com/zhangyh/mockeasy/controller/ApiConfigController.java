@@ -1,7 +1,9 @@
 package com.zhangyh.mockeasy.controller;
 
 import com.zhangyh.mockeasy.model.ApiConfig;
+import com.zhangyh.mockeasy.model.ApiGroup;
 import com.zhangyh.mockeasy.service.ApiConfigService;
+import com.zhangyh.mockeasy.service.ApiGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,13 +21,29 @@ public class ApiConfigController {
     @Autowired
     private ApiConfigService apiConfigService;
     
+    @Autowired
+    private ApiGroupService apiGroupService;
+    
     /**
      * 首页，显示API配置列表
      */
     @GetMapping("/")
-    public String index(Model model) {
-        List<ApiConfig> apiConfigs = apiConfigService.getAllApiConfigs();
+    public String index(Model model, @RequestParam(required = false) String groupId) {
+        List<ApiConfig> apiConfigs;
+        if (groupId != null && !groupId.isEmpty()) {
+            // 按分组过滤API配置
+            apiConfigs = apiConfigService.getApiConfigsByGroupId(groupId);
+        } else {
+            // 获取所有API配置
+            apiConfigs = apiConfigService.getAllApiConfigs();
+        }
+        
+        // 获取所有分组
+        List<ApiGroup> apiGroups = apiGroupService.getAllApiGroups();
+        
         model.addAttribute("apiConfigs", apiConfigs);
+        model.addAttribute("apiGroups", apiGroups);
+        model.addAttribute("selectedGroupId", groupId);
         return "index";
     }
     
@@ -35,6 +53,9 @@ public class ApiConfigController {
     @GetMapping("/create")
     public String createPage(Model model) {
         model.addAttribute("apiConfig", new ApiConfig());
+        // 获取所有分组供选择
+        List<ApiGroup> apiGroups = apiGroupService.getAllApiGroups();
+        model.addAttribute("apiGroups", apiGroups);
         return "create";
     }
     
@@ -45,6 +66,9 @@ public class ApiConfigController {
     public String editPage(@PathVariable String id, Model model) {
         ApiConfig apiConfig = apiConfigService.getApiConfigById(id);
         model.addAttribute("apiConfig", apiConfig);
+        // 获取所有分组供选择
+        List<ApiGroup> apiGroups = apiGroupService.getAllApiGroups();
+        model.addAttribute("apiGroups", apiGroups);
         return "edit";
     }
     

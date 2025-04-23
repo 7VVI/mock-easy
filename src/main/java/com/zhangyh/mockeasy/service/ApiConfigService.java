@@ -5,7 +5,7 @@ import com.zhangyh.mockeasy.model.ApiConfig;
 import java.util.List;
 
 /**
- * API配置服务接口，用于管理API配置信息
+ * API配置服务接口
  */
 public interface ApiConfigService {
     
@@ -28,6 +28,13 @@ public interface ApiConfigService {
      * @return API配置列表
      */
     List<ApiConfig> getAllApiConfigs();
+    
+    /**
+     * 根据分组ID获取API配置列表
+     * @param groupId 分组ID
+     * @return API配置列表
+     */
+    List<ApiConfig> getApiConfigsByGroupId(String groupId);
     
     /**
      * 更新API配置
