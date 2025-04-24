@@ -53,28 +53,43 @@ public class DynamicApiHandler {
      */
     public boolean registerApi(ApiConfig apiConfig) {
         try {
+            // 验证必要字段
+            if (apiConfig.getPath() == null || apiConfig.getMethod() == null) {
+                log.error("注册API失败: 路径或方法为空");
+                return false;
+            }
+            
+            // 确保method字段为大写
+            String method = apiConfig.getMethod().toUpperCase();
+            apiConfig.setMethod(method);
+            
             // 如果已存在，先取消注册
             unregisterApi(apiConfig);
             
-            // 创建RequestMappingInfo
-            RequestMethod requestMethod = RequestMethod.valueOf(apiConfig.getMethod());
-            RequestMappingInfo mappingInfo = RequestMappingInfo
-                    .paths(apiConfig.getPath())
-                    .methods(requestMethod)
-                    .build();
-            
-            // 注册处理器方法
-            handlerMapping.registerMapping(mappingInfo, this, handleMethod);
-            
-            // 保存映射信息
-            String key = getApiKey(apiConfig);
-            requestMappingInfoMap.put(key, mappingInfo);
-            
-            // 保存API配置信息，用于处理请求时获取
-            apiConfigMap.put(key, apiConfig);
-            
-            log.info("成功注册API: {} {}", apiConfig.getMethod(), apiConfig.getPath());
-            return true;
+            try {
+                // 创建RequestMappingInfo
+                RequestMethod requestMethod = RequestMethod.valueOf(method);
+                RequestMappingInfo mappingInfo = RequestMappingInfo
+                        .paths(apiConfig.getPath())
+                        .methods(requestMethod)
+                        .build();
+                
+                // 注册处理器方法
+                handlerMapping.registerMapping(mappingInfo, this, handleMethod);
+                
+                // 保存映射信息
+                String key = getApiKey(apiConfig);
+                requestMappingInfoMap.put(key, mappingInfo);
+                
+                // 保存API配置信息，用于处理请求时获取
+                apiConfigMap.put(key, apiConfig);
+                
+                log.info("成功注册API: {} {}", apiConfig.getMethod(), apiConfig.getPath());
+                return true;
+            } catch (IllegalArgumentException e) {
+                log.error("注册API失败: 无效的请求方法 {}, 错误: {}", apiConfig.getMethod(), e.getMessage());
+                return false;
+            }
         } catch (Exception e) {
             log.error("注册API失败: {} {}, 错误: {}", apiConfig.getMethod(), apiConfig.getPath(), e.getMessage(), e);
             return false;
@@ -120,10 +135,48 @@ public class DynamicApiHandler {
         
         String path = request.getRequestURI();
         String method = request.getMethod();
-        String key = path + ":" + method;
         
-        // 从配置映射中获取API配置
+        // 确保方法为大写
+        method = method.toUpperCase();
+        
+        // 尝试直接匹配
+        String key = path + ":" + method;
         ApiConfig apiConfig = apiConfigMap.get(key);
+        
+        // 如果直接匹配失败，尝试遍历所有配置进行匹配
+        if (apiConfig == null) {
+            log.debug("直接匹配未找到API配置: {} {}, 尝试遍历匹配", method, path);
+            for (Map.Entry<String, ApiConfig> entry : apiConfigMap.entrySet()) {
+                ApiConfig config = entry.getValue();
+                if (method.equals(config.getMethod()) && path.equals(config.getPath())) {
+                    apiConfig = config;
+                    log.debug("找到匹配的API配置: {} {}", method, path);
+                    break;
+                }
+            }
+            
+            // 如果仍然没有找到，尝试忽略路径末尾的斜杠进行匹配
+            if (apiConfig == null) {
+                String altPath = path.endsWith("/") ? path.substring(0, path.length() - 1) : path + "/";
+                String altKey = altPath + ":" + method;
+                apiConfig = apiConfigMap.get(altKey);
+                
+                if (apiConfig == null) {
+                    // 再次尝试遍历匹配
+                    for (Map.Entry<String, ApiConfig> entry : apiConfigMap.entrySet()) {
+                        ApiConfig config = entry.getValue();
+                        if (method.equals(config.getMethod()) && 
+                            (altPath.equals(config.getPath()) || path.equals(config.getPath()))) {
+                            apiConfig = config;
+                            log.debug("通过替代路径找到匹配的API配置: {} {}", method, altPath);
+                            break;
+                        }
+                    }
+                } else {
+                    log.debug("通过替代路径键找到匹配的API配置: {} {}", method, altPath);
+                }
+            }
+        }
         
         if (apiConfig == null) {
             log.error("未找到API配置: {} {}", method, path);
@@ -171,7 +224,19 @@ public class DynamicApiHandler {
      * 生成API唯一键
      */
     private String getApiKey(ApiConfig apiConfig) {
-        return apiConfig.getPath() + ":" + apiConfig.getMethod();
+        // 确保路径和方法都不为空
+        if (apiConfig.getPath() == null || apiConfig.getMethod() == null) {
+            throw new IllegalArgumentException("API路径或方法不能为空");
+        }
+        // 确保路径以/开头
+        String path = apiConfig.getPath();
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        // 确保方法为大写
+        String method = apiConfig.getMethod().toUpperCase();
+        
+        return path + ":" + method;
     }
     
     /**

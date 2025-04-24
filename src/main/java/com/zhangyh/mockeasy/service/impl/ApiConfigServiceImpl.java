@@ -29,15 +29,38 @@ public class ApiConfigServiceImpl implements ApiConfigService {
 
     @Override
     public ApiConfig saveApiConfig(ApiConfig apiConfig) {
+        // 处理空字符串或空白字符串的groupId，将其设置为null
+        if (apiConfig.getGroupId() != null && apiConfig.getGroupId().trim().isEmpty()) {
+            apiConfig.setGroupId(null);
+        }
+        
+        // 确保path字段以/开头
+        if (apiConfig.getPath() != null && !apiConfig.getPath().startsWith("/")) {
+            apiConfig.setPath("/" + apiConfig.getPath());
+        }
+        
+        // 确保method字段为大写
+        if (apiConfig.getMethod() != null) {
+            apiConfig.setMethod(apiConfig.getMethod().toUpperCase());
+        }
+        
         // 保存到数据库
         apiConfigMapper.insert(apiConfig);
+        
+        // 确保ID已生成
+        if (apiConfig.getId() == null || apiConfig.getId().isEmpty()) {
+            throw new RuntimeException("API配置ID生成失败");
+        }
         
         // 更新路径方法映射缓存
         String pathMethodKey = getPathMethodKey(apiConfig.getPath(), apiConfig.getMethod());
         pathMethodIdMap.put(pathMethodKey, apiConfig.getId());
         
         // 注册API
-        registerApi(apiConfig);
+        boolean registered = registerApi(apiConfig);
+        if (!registered) {
+            throw new RuntimeException("API注册失败: " + apiConfig.getPath() + " " + apiConfig.getMethod());
+        }
         
         return apiConfig;
     }
@@ -65,6 +88,21 @@ public class ApiConfigServiceImpl implements ApiConfigService {
             throw new IllegalArgumentException("API配置ID不能为空");
         }
         
+        // 处理空字符串或空白字符串的groupId，将其设置为null
+        if (apiConfig.getGroupId() != null && apiConfig.getGroupId().trim().isEmpty()) {
+            apiConfig.setGroupId(null);
+        }
+        
+        // 确保path字段以/开头
+        if (apiConfig.getPath() != null && !apiConfig.getPath().startsWith("/")) {
+            apiConfig.setPath("/" + apiConfig.getPath());
+        }
+        
+        // 确保method字段为大写
+        if (apiConfig.getMethod() != null) {
+            apiConfig.setMethod(apiConfig.getMethod().toUpperCase());
+        }
+        
         // 获取旧配置
         ApiConfig oldConfig = apiConfigMapper.selectById(apiConfig.getId());
         if (oldConfig == null) {
@@ -77,7 +115,10 @@ public class ApiConfigServiceImpl implements ApiConfigService {
         if (!oldConfig.getPath().equals(apiConfig.getPath()) || 
             !oldConfig.getMethod().equals(apiConfig.getMethod())) {
             // 取消旧的注册
-            unregisterApi(oldConfig);
+            boolean unregistered = unregisterApi(oldConfig);
+            if (!unregistered) {
+                throw new RuntimeException("取消注册旧API失败: " + oldConfig.getPath() + " " + oldConfig.getMethod());
+            }
             pathMethodIdMap.remove(oldPathMethodKey);
             
             // 更新路径方法映射
@@ -89,7 +130,10 @@ public class ApiConfigServiceImpl implements ApiConfigService {
         apiConfigMapper.updateById(apiConfig);
         
         // 重新注册API
-        registerApi(apiConfig);
+        boolean registered = registerApi(apiConfig);
+        if (!registered) {
+            throw new RuntimeException("API重新注册失败: " + apiConfig.getPath() + " " + apiConfig.getMethod());
+        }
         
         return apiConfig;
     }
