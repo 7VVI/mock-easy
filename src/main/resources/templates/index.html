@@ -97,10 +97,13 @@
                             url: '/api/config/' + id,
                             type: 'DELETE',
                             success: function() {
-                                location.reload();
+                                showNotification('API配置删除成功', 'success');
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 1000);
                             },
                             error: function() {
-                                alert('删除失败，请重试！');
+                                showNotification('删除失败，请重试', 'error');
                             }
                         });
                     }

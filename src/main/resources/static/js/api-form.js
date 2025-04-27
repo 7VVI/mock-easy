@@ -322,7 +322,7 @@ $(document).ready(function() {
         
         // 验证必填字段
         if (!apiConfig.path) {
-            showNotification('请填写API路径', 'danger');
+            showNotification('请填写API路径', 'error');
             return;
         }
         
@@ -346,7 +346,7 @@ $(document).ready(function() {
                 }, 1000);
             },
             error: function(xhr, status, error) {
-                showNotification('保存失败: ' + error, 'danger');
+                showNotification('保存失败: ' + error, 'error');
             }
         });
     }
@@ -387,7 +387,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
-                showNotification('加载API配置失败: ' + error, 'danger');
+                showNotification('加载API配置失败: ' + error, 'error');
             }
         });
     }

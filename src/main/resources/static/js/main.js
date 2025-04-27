@@ -72,26 +72,20 @@ function confirmAction(message, callback) {
 
 // 显示通知消息
 function showNotification(message, type = 'success') {
-    // 如果页面中有通知容器，则使用它
-    const $notificationContainer = $('#notification-container');
-    
-    if ($notificationContainer.length) {
-        const $alert = $(`
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `);
-        
-        $notificationContainer.append($alert);
-        
-        // 5秒后自动关闭
-        setTimeout(function() {
-            $alert.alert('close');
-        }, 5000);
-    } else {
-        // 否则使用alert
-        alert(message);
+    // 使用Element UI风格的消息提示组件
+    switch(type) {
+        case 'success':
+            ElementMessage.success(message);
+            break;
+        case 'warning':
+            ElementMessage.warning(message);
+            break;
+        case 'danger':
+        case 'error':
+            ElementMessage.error(message);
+            break;
+        default:
+            ElementMessage.info(message);
     }
 }
 
