@@ -417,6 +417,16 @@
                     headers: collectHeadersData()
                 };
 
+                // 验证必填字段
+                if (!apiConfig.path) {
+                    ElementMessage.error('请填写API路径');
+                    return;
+                }
+                
+                if (!apiConfig.path.startsWith('/')) {
+                    apiConfig.path = '/' + apiConfig.path;
+                }
+
                 // 收集字段数据
                 $('#fieldsContainer > .field-row').each(function() {
                     apiConfig.responseFields.push(collectFieldData($(this)));
@@ -429,11 +439,13 @@
                     contentType: 'application/json',
                     data: JSON.stringify(apiConfig),
                     success: function(response) {
-                        alert('API更新成功！');
-                        window.location.href = '/';
+                        ElementMessage.success('API更新成功！');
+                        setTimeout(function() {
+                            window.location.href = '/';
+                        }, 1000);
                     },
                     error: function(xhr) {
-                        alert('更新失败: ' + (xhr.responseText || '未知错误'));
+                        ElementMessage.error('更新失败: ' + (xhr.responseText || '未知错误'));
                     }
                 });
             }

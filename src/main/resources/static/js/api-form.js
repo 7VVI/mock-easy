@@ -322,7 +322,7 @@ $(document).ready(function() {
         
         // 验证必填字段
         if (!apiConfig.path) {
-            showNotification('请填写API路径', 'error');
+            ElementMessage.error('请填写API路径');
             return;
         }
         
@@ -340,13 +340,13 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify(apiConfig),
             success: function(response) {
-                showNotification('API配置保存成功', 'success');
+                ElementMessage.success('API配置保存成功');
                 setTimeout(function() {
                     window.location.href = '/';
                 }, 1000);
             },
             error: function(xhr, status, error) {
-                showNotification('保存失败: ' + error, 'error');
+                ElementMessage.error('保存失败: ' + error);
             }
         });
     }
@@ -387,7 +387,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr, status, error) {
-                showNotification('加载API配置失败: ' + error, 'error');
+                ElementMessage.error('加载API配置失败: ' + error);
             }
         });
     }
