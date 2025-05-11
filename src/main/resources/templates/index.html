@@ -9,10 +9,10 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>API配置列表</h2>
             <div>
-                <a th:href="@{/groups}" class="btn btn-outline-secondary me-2">
+                <a th:href="@{/groups}" class="btn btn-outline-secondary me-2" data-spa="true">
                     <i class="fas fa-folder"></i> 分组管理
                 </a>
-                <a th:href="@{/create}" class="btn btn-primary">
+                <a th:href="@{/create}" class="btn btn-primary" data-spa="true">
                     <i class="fas fa-plus"></i> 创建新接口
                 </a>
             </div>
@@ -23,7 +23,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <label class="me-2">按分组筛选:</label>
-                    <select id="groupFilter" class="form-select" style="max-width: 300px;" onchange="filterByGroup()">
+                    <select id="groupFilter" class="form-select" style="max-width: 300px;">
                         <option value="">全部API</option>
                         <option th:each="group : ${apiGroups}" 
                                 th:value="${group.id}" 
@@ -72,13 +72,13 @@
                         <td th:text="${api.responseCount ?: 1}"></td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a th:href="@{'/edit/' + ${api.id}}" class="btn btn-outline-primary" title="编辑">
+                                <a th:href="@{'/edit/' + ${api.id}}" class="btn btn-outline-primary" title="编辑" data-spa="true">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button class="btn btn-outline-danger delete-api" th:data-id="${api.id}" title="删除">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                                <a th:href="${api.path}" target="_blank" class="btn btn-outline-success" title="测试">
+                                <a th:href="${api.path}" target="_blank" class="btn btn-outline-success no-spa" title="测试">
                                     <i class="fas fa-play"></i>
                                 </a>
                             </div>
@@ -102,7 +102,8 @@
                             success: function() {
                                 showNotification('API配置删除成功', 'success');
                                 setTimeout(function() {
-                                    location.reload();
+                                    // 使用AJAX重新加载当前页面内容，而不是刷新整个页面
+                                    loadContent(window.location.pathname + window.location.search);
                                 }, 1000);
                             },
                             error: function() {
@@ -116,14 +117,18 @@
             // 分组筛选函数
             window.filterByGroup = function() {
                 const groupId = document.getElementById('groupFilter').value;
-                window.location.href = groupId ? `/?groupId=${groupId}` : '/';
+                const url = groupId ? `/?groupId=${groupId}` : '/';
+                loadContent(url);
+                history.pushState({url: url}, '', url);
             };
             
             // 在当前分组创建API
             window.createInCurrentGroup = function() {
                 const groupId = document.getElementById('groupFilter').value;
                 if (groupId) {
-                    window.location.href = `/create?groupId=${groupId}`;
+                    const url = `/create?groupId=${groupId}`;
+                    loadContent(url);
+                    history.pushState({url: url}, '', url);
                 }
             };
             
@@ -144,6 +149,8 @@
                     } else {
                         $('#createInGroupBtn').hide();
                     }
+                    // 触发分组筛选
+                    filterByGroup();
                 });
             });
         </script>

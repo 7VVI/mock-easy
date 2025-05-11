@@ -1,18 +1,15 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>编辑API分组 - MockEasy</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <title>编辑API分组</title>
 </head>
 <body>
-    <div class="container mt-4">
+    <div layout:fragment="content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>编辑API分组</h2>
-            <a href="/groups" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> 返回分组列表
+            <a href="/groups" class="btn btn-outline-secondary" data-spa="true">
+                <i class="fas fa-arrow-left"></i> 返回分组列表
             </a>
         </div>
 
@@ -36,57 +33,48 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function updateGroup() {
-            const id = document.getElementById('id').value;
-            const name = document.getElementById('name').value;
-            const description = document.getElementById('description').value;
-            
-            if (!name) {
-                alert('请输入分组名称');
-                return;
-            }
-            
-            if (!id) {
-                alert('分组ID不能为空');
-                return;
-            }
-            
-            const groupData = {
-                id: id,
-                name: name,
-                description: description
-            };
-            
-            fetch(`/api/group/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(groupData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text || '更新失败');
-                    });
+    <div layout:fragment="scripts">
+        <script>
+            function updateGroup() {
+                const id = $('#id').val();
+                const name = $('#name').val();
+                const description = $('#description').val();
+                
+                if (!name) {
+                    ElementMessage.error('请输入分组名称');
+                    return;
                 }
-                return response.json();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('更新失败: ' + error.message);
-                return Promise.reject(error);
-            })
-            .then(data => {
-                window.location.href = '/groups';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('更新失败: ' + error.message);
-            });
-        }
-    </script>
+                
+                if (!id) {
+                    ElementMessage.error('分组ID不能为空');
+                    return;
+                }
+                
+                const groupData = {
+                    id: id,
+                    name: name,
+                    description: description
+                };
+                
+                $.ajax({
+                    url: `/api/group/${id}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(groupData),
+                    success: function(data) {
+                        ElementMessage.success('分组更新成功');
+                        // 使用SPA方式加载分组列表页面
+                        setTimeout(function() {
+                            loadContent('/groups');
+                        }, 1000);
+                    },
+                    error: function(xhr) {
+                        const errorMsg = xhr.responseText || '更新失败';
+                        ElementMessage.error('更新失败: ' + errorMsg);
+                    }
+                });
+            }
+        </script>
+    </div>
 </body>
 </html>

@@ -1,21 +1,18 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API分组管理 - MockEasy</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <title>API分组管理</title>
 </head>
 <body>
-    <div class="container mt-4">
+    <div layout:fragment="content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>API分组管理</h2>
             <div>
-                <a href="/" class="btn btn-outline-secondary me-2">
+                <a href="/" class="btn btn-outline-secondary me-2" data-spa="true">
                     <i class="bi bi-arrow-left"></i> 返回首页
                 </a>
-                <a href="/group/create" class="btn btn-primary">
+                <a href="/group/create" class="btn btn-primary" data-spa="true">
                     <i class="bi bi-plus-circle"></i> 新建分组
                 </a>
             </div>
@@ -39,12 +36,12 @@
                         <tbody>
                             <tr th:each="group : ${apiGroups}">
                                 <td>
-                                    <a th:href="@{/(groupId=${group.id})}" th:text="${group.name}"></a>
+                                    <a th:href="@{/(groupId=${group.id})}" th:text="${group.name}" data-spa="true"></a>
                                 </td>
                                 <td th:text="${group.description}"></td>
                                 <td th:text="${#dates.format(group.createTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
                                 <td>
-                                    <a th:href="@{/group/edit/{id}(id=${group.id})}" class="btn btn-sm btn-outline-primary me-1">
+                                    <a th:href="@{/group/edit/{id}(id=${group.id})}" class="btn btn-sm btn-outline-primary me-1" data-spa="true">
                                         <i class="bi bi-pencil"></i> 编辑
                                     </a>
                                     <button class="btn btn-sm btn-outline-danger" 
@@ -60,36 +57,33 @@
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 使用事件委托处理删除按钮点击
-            document.querySelectorAll('.btn-outline-danger').forEach(button => {
-                button.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
+    
+    <div layout:fragment="scripts">
+        <script>
+            $(document).ready(function() {
+                // 使用事件委托处理删除按钮点击
+                $('.btn-outline-danger').on('click', function() {
+                    const id = $(this).data('id');
                     if (confirm('确定要删除这个分组吗？删除分组不会删除其中的API配置，但会解除关联关系。')) {
-                        fetch(`/api/group/${id}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Content-Type': 'application/json'
+                        $.ajax({
+                            url: `/api/group/${id}`,
+                            type: 'DELETE',
+                            contentType: 'application/json',
+                            success: function() {
+                                ElementMessage.success('删除成功');
+                                // 使用SPA方式重新加载当前页面
+                                setTimeout(function() {
+                                    loadContent(window.location.pathname);
+                                }, 1000);
+                            },
+                            error: function() {
+                                ElementMessage.error('删除失败，请重试');
                             }
-                        })
-                        .then(response => {
-                            if (response.ok) {
-                                window.location.reload();
-                            } else {
-                                alert('删除失败，请重试');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('删除失败，请重试');
                         });
                     }
                 });
             });
-        });
-    </script>
+        </script>
+    </div>
 </body>
 </html>

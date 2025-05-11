@@ -8,6 +8,15 @@
     <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.2/css/all.min.css}">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/element-message.css}">
+    <style>
+        #content-container {
+            min-height: 70vh;
+            transition: opacity 0.3s;
+        }
+        .loading {
+            opacity: 0.6;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -30,8 +39,10 @@
     </nav>
 
     <div class="container mt-4">
-        <div layout:fragment="content">
-            <!-- 页面内容将被插入到这里 -->
+        <div id="content-container">
+            <div layout:fragment="content">
+                <!-- 页面内容将被插入到这里 -->
+            </div>
         </div>
     </div>
 
@@ -45,6 +56,76 @@
     <script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
     <script th:src="@{/js/element-message.js}"></script>
     <script th:src="@{/js/main.js}"></script>
+    <script>
+        $(document).ready(function() {
+            // 拦截导航链接点击事件
+            $(document).on('click', 'a[data-spa="true"], a.nav-link, a[href^="/"]', function(e) {
+                // 排除外部链接和特定链接
+                const href = $(this).attr('href');
+                if (!href || href.startsWith('http') || href === '#' || $(this).attr('target') === '_blank' || $(this).hasClass('no-spa')) {
+                    return true;
+                }
+                
+                e.preventDefault();
+                loadContent(href);
+                // 更新浏览器历史记录
+                history.pushState({url: href}, '', href);
+                return false;
+            });
+            
+            // 处理浏览器前进后退
+            window.onpopstate = function(event) {
+                if (event.state && event.state.url) {
+                    loadContent(event.state.url);
+                }
+            };
+            
+            // 加载内容函数
+            function loadContent(url) {
+                const $container = $('#content-container');
+                $container.addClass('loading');
+                
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    dataType: 'html',
+                    success: function(data) {
+                        // 提取内容区域
+                        const $html = $(data);
+                        const content = $html.find('[layout\\:fragment="content"]').html();
+                        const title = $html.filter('title').text();
+                        
+                        if (content) {
+                            $('[layout\\:fragment="content"]').html(content);
+                            if (title) {
+                                document.title = title;
+                            }
+                            
+                            // 执行页面中的脚本
+                            const scripts = $html.find('[layout\\:fragment="scripts"]').html();
+                            if (scripts) {
+                                $('body').append('<div id="temp-script-container">' + scripts + '</div>');
+                                $('#temp-script-container script').each(function() {
+                                    eval($(this).text());
+                                });
+                                $('#temp-script-container').remove();
+                            }
+                        } else {
+                            // 如果找不到内容片段，可能是错误页面，直接跳转
+                            window.location.href = url;
+                        }
+                    },
+                    error: function() {
+                        // 出错时直接跳转
+                        window.location.href = url;
+                    },
+                    complete: function() {
+                        $container.removeClass('loading');
+                    }
+                });
+            }
+        });
+    </script>
     <th:block layout:fragment="scripts"></th:block>
 </body>
 </html>

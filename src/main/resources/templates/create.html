@@ -112,7 +112,7 @@
             </div>
 
             <div class="d-flex justify-content-between">
-                <a th:href="@{/}" class="btn btn-secondary">
+                <a th:href="@{/}" class="btn btn-secondary" data-spa="true">
                     <i class="fas fa-arrow-left"></i> 返回
                 </a>
                 <button type="submit" class="btn btn-success">
@@ -382,7 +382,7 @@
                     success: function(response) {
                         ElementMessage.success('API创建成功！');
                         setTimeout(function() {
-                            window.location.href = '/';
+                            loadContent('/');
                         }, 1000);
                     },
                     error: function(xhr) {
