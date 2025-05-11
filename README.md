@@ -52,7 +52,11 @@ cd mock-easy
 
 ## 使用指南
 
+![image-20250511085119204](https://picgo-liziyuan.oss-cn-hangzhou.aliyuncs.com/zhangyhimage-20250511085119204.png)
+
 ### 创建模拟接口
+
+![image-20250511085137190](https://picgo-liziyuan.oss-cn-hangzhou.aliyuncs.com/zhangyhimage-20250511085137190.png)
 
 1. 在首页点击「创建新接口」按钮
 2. 填写接口基本信息：
