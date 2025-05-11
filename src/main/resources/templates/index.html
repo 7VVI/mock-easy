@@ -30,6 +30,9 @@
                                 th:text="${group.name}"
                                 th:selected="${group.id == selectedGroupId}"></option>
                     </select>
+                    <button id="createInGroupBtn" class="btn btn-success ms-3" style="display: none;" onclick="createInCurrentGroup()">
+                        <i class="fas fa-plus"></i> 在当前分组创建
+                    </button>
                 </div>
             </div>
         </div>
@@ -115,6 +118,34 @@
                 const groupId = document.getElementById('groupFilter').value;
                 window.location.href = groupId ? `/?groupId=${groupId}` : '/';
             };
+            
+            // 在当前分组创建API
+            window.createInCurrentGroup = function() {
+                const groupId = document.getElementById('groupFilter').value;
+                if (groupId) {
+                    window.location.href = `/create?groupId=${groupId}`;
+                }
+            };
+            
+            // 页面加载时检查是否有选中的分组，如果有则显示"在当前分组创建"按钮
+            $(document).ready(function() {
+                const groupId = document.getElementById('groupFilter').value;
+                if (groupId) {
+                    $('#createInGroupBtn').show();
+                } else {
+                    $('#createInGroupBtn').hide();
+                }
+                
+                // 监听分组选择变化
+                $('#groupFilter').change(function() {
+                    const selectedGroupId = $(this).val();
+                    if (selectedGroupId) {
+                        $('#createInGroupBtn').show();
+                    } else {
+                        $('#createInGroupBtn').hide();
+                    }
+                });
+            });
         </script>
     </div>
 </body>

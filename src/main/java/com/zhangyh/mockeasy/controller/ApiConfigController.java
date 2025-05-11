@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -51,8 +52,13 @@ public class ApiConfigController {
      * 创建API配置页面
      */
     @GetMapping("/create")
-    public String createPage(Model model) {
-        model.addAttribute("apiConfig", new ApiConfig());
+    public String createPage(@RequestParam(required = false) String groupId, Model model) {
+        ApiConfig apiConfig = new ApiConfig();
+        // 如果传入了分组ID，则预设到apiConfig中
+        if (StringUtils.hasText(groupId)) {
+            apiConfig.setGroupId(groupId);
+        }
+        model.addAttribute("apiConfig", apiConfig);
         // 获取所有分组供选择
         List<ApiGroup> apiGroups = apiGroupService.getAllApiGroups();
         model.addAttribute("apiGroups", apiGroups);
