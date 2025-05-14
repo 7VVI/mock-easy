@@ -105,6 +105,12 @@
             const $container = $('#content-container');
             $container.addClass('loading');
             
+            // 保存当前分组选择器的状态
+            let savedGroupId = null;
+            if ($('#groupFilter').length) {
+                savedGroupId = $('#groupFilter').val();
+            }
+            
             $.ajax({
                 url: url,
                 type: 'GET',
@@ -133,6 +139,21 @@
                         
                         // 重新初始化页面中的事件监听器
                         initPageEvents();
+                        
+                        // 恢复分组选择器的状态（如果新页面也有分组选择器）
+                        if (savedGroupId && $('#groupFilter').length) {
+                            // 只有当URL中没有groupId参数时才恢复之前的选择
+                            // 如果URL中有groupId参数，则让服务器端的选择优先
+                            if (!url.includes('groupId=')) {
+                                $('#groupFilter').val(savedGroupId);
+                                // 根据恢复的选择状态显示或隐藏"在当前分组创建"按钮
+                                if (savedGroupId) {
+                                    $('#createInGroupBtn').show();
+                                } else {
+                                    $('#createInGroupBtn').hide();
+                                }
+                            }
+                        }
                     } else {
                         // 如果找不到内容片段，可能是错误页面，直接跳转
                         window.location.href = url;

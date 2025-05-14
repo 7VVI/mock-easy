@@ -92,8 +92,71 @@
     <div layout:fragment="scripts">
         <script>
             $(document).ready(function() {
-                // 删除API配置
-                $('.delete-api').click(function() {
+                // 初始化绑定删除按钮事件
+                bindDeleteEvents();
+            });
+            
+            // 分组筛选函数
+            window.filterByGroup = function() {
+                const groupId = document.getElementById('groupFilter').value;
+                const url = groupId ? `/?groupId=${groupId}` : '/';
+                
+                // 显示加载状态但不影响下拉框
+                const $tableContainer = $('.table-responsive');
+                const $alertContainer = $('.alert');
+                if ($tableContainer.length) {
+                    $tableContainer.css('opacity', '0.6');
+                }
+                
+                // 使用AJAX获取筛选后的数据，但不重新加载整个页面
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    dataType: 'html',
+                    success: function(data) {
+                        // 提取表格内容
+                        const $html = $(data);
+                        const newTable = $html.find('.table-responsive').html();
+                        const newAlert = $html.find('.alert').html();
+                        
+                        // 更新表格内容，而不是整个页面
+                        if (newTable) {
+                            if ($tableContainer.length) {
+                                $tableContainer.html(newTable);
+                            } else {
+                                // 如果之前没有表格（空结果），现在有了，则需要创建表格容器
+                                $alertContainer.replaceWith('<div class="table-responsive">' + newTable + '</div>');
+                            }
+                        } else if (newAlert) {
+                            // 如果筛选后没有结果，显示提示信息
+                            if ($alertContainer.length) {
+                                $alertContainer.html(newAlert);
+                            } else {
+                                // 如果之前有表格，现在没有结果，则替换为提示信息
+                                $tableContainer.replaceWith('<div class="alert alert-info">' + newAlert + '</div>');
+                            }
+                        }
+                        
+                        // 重新绑定删除按钮事件
+                        bindDeleteEvents();
+                    },
+                    error: function() {
+                        // 出错时才完整加载页面
+                        loadContent(url);
+                    },
+                    complete: function() {
+                        if ($tableContainer.length) {
+                            $tableContainer.css('opacity', '1');
+                        }
+                        // 更新URL，但不触发页面加载
+                        history.pushState({url: url}, '', url);
+                    }
+                });
+            };
+            
+            // 绑定删除按钮事件
+            function bindDeleteEvents() {
+                $('.delete-api').off('click').on('click', function() {
                     const id = $(this).data('id');
                     if (confirm('确定要删除这个API配置吗？')) {
                         $.ajax({
@@ -102,8 +165,8 @@
                             success: function() {
                                 showNotification('API配置删除成功', 'success');
                                 setTimeout(function() {
-                                    // 使用AJAX重新加载当前页面内容，而不是刷新整个页面
-                                    loadContent(window.location.pathname + window.location.search);
+                                    // 重新加载当前分组的数据
+                                    window.filterByGroup();
                                 }, 1000);
                             },
                             error: function() {
@@ -112,15 +175,7 @@
                         });
                     }
                 });
-            });
-            
-            // 分组筛选函数
-            window.filterByGroup = function() {
-                const groupId = document.getElementById('groupFilter').value;
-                const url = groupId ? `/?groupId=${groupId}` : '/';
-                loadContent(url);
-                history.pushState({url: url}, '', url);
-            };
+            }
             
             // 在当前分组创建API
             window.createInCurrentGroup = function() {
