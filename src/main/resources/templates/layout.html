@@ -54,7 +54,27 @@
     <script th:src="@{/js/element-message.js}"></script>
     <script th:src="@{/js/main.js}"></script>
     <script>
+        // 初始化页面事件监听器
+        function initPageEvents() {
+            // 初始化分组筛选事件
+            if ($('#groupFilter').length) {
+                $('#groupFilter').off('change').on('change', function() {
+                    const selectedGroupId = $(this).val();
+                    if (selectedGroupId) {
+                        $('#createInGroupBtn').show();
+                    } else {
+                        $('#createInGroupBtn').hide();
+                    }
+                    // 触发分组筛选
+                    window.filterByGroup();
+                });
+            }
+        }
+        
         $(document).ready(function() {
+            // 初始化页面事件
+            initPageEvents();
+            
             // 拦截导航链接点击事件
             $(document).on('click', 'a[data-spa="true"], a.nav-link, a[href^="/"]', function(e) {
                 // 排除外部链接和特定链接
@@ -70,6 +90,7 @@
                 return false;
             });
             
+            
             // 处理浏览器前进后退
             window.onpopstate = function(event) {
                 if (event.state && event.state.url) {
@@ -77,51 +98,55 @@
                 }
             };
             
-            // 加载内容函数
-            function loadContent(url) {
-                const $container = $('#content-container');
-                $container.addClass('loading');
-                
-                $.ajax({
-                    url: url,
-                    type: 'GET',
-                    dataType: 'html',
-                    success: function(data) {
-                        // 提取内容区域
-                        const $html = $(data);
-                        const content = $html.find('[layout\\:fragment="content"]').html();
-                        const title = $html.filter('title').text();
-                        
-                        if (content) {
-                            $('[layout\\:fragment="content"]').html(content);
-                            if (title) {
-                                document.title = title;
-                            }
-                            
-                            // 执行页面中的脚本
-                            const scripts = $html.find('[layout\\:fragment="scripts"]').html();
-                            if (scripts) {
-                                $('body').append('<div id="temp-script-container">' + scripts + '</div>');
-                                $('#temp-script-container script').each(function() {
-                                    eval($(this).text());
-                                });
-                                $('#temp-script-container').remove();
-                            }
-                        } else {
-                            // 如果找不到内容片段，可能是错误页面，直接跳转
-                            window.location.href = url;
-                        }
-                    },
-                    error: function() {
-                        // 出错时直接跳转
-                        window.location.href = url;
-                    },
-                    complete: function() {
-                        $container.removeClass('loading');
-                    }
-                });
-            }
         });
+        
+        // 将loadContent函数移到全局作用域，使其可以被其他页面调用
+        window.loadContent = function(url) {
+            const $container = $('#content-container');
+            $container.addClass('loading');
+            
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'html',
+                success: function(data) {
+                    // 提取内容区域
+                    const $html = $(data);
+                    const content = $html.find('[layout\\:fragment="content"]').html();
+                    const title = $html.filter('title').text();
+                    
+                    if (content) {
+                        $('[layout\\:fragment="content"]').html(content);
+                        if (title) {
+                            document.title = title;
+                        }
+                        
+                        // 执行页面中的脚本
+                        const scripts = $html.find('[layout\\:fragment="scripts"]').html();
+                        if (scripts) {
+                            $('body').append('<div id="temp-script-container">' + scripts + '</div>');
+                            $('#temp-script-container script').each(function() {
+                                eval($(this).text());
+                            });
+                            $('#temp-script-container').remove();
+                        }
+                        
+                        // 重新初始化页面中的事件监听器
+                        initPageEvents();
+                    } else {
+                        // 如果找不到内容片段，可能是错误页面，直接跳转
+                        window.location.href = url;
+                    }
+                },
+                error: function() {
+                    // 出错时直接跳转
+                    window.location.href = url;
+                },
+                complete: function() {
+                    $container.removeClass('loading');
+                }
+            });
+        };
     </script>
     <th:block layout:fragment="scripts"></th:block>
 </body>

@@ -140,18 +140,7 @@
                 } else {
                     $('#createInGroupBtn').hide();
                 }
-                
-                // 监听分组选择变化
-                $('#groupFilter').change(function() {
-                    const selectedGroupId = $(this).val();
-                    if (selectedGroupId) {
-                        $('#createInGroupBtn').show();
-                    } else {
-                        $('#createInGroupBtn').hide();
-                    }
-                    // 触发分组筛选
-                    filterByGroup();
-                });
+                // 注意：分组选择变化的事件监听已经移至layout.html的initPageEvents函数中处理
             });
         </script>
     </div>
